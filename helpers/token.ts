@@ -1,40 +1,38 @@
 import jwt from 'jsonwebtoken';
-const Token = require("../models/Token");
+import Token from "../models/Token";
 
 function saveToken(key: string, tokenUser: string) {
-  const data = {
-    user: key,
-    token: tokenUser,
-  }
-  const tokenObject = new Token(data)
-  tokenObject.save()
+    const data = {
+        user: key,
+        token: tokenUser,
+    };
+    const tokenObject = new Token(data)
+    tokenObject.save()
 }
 
 const tokenHelper = {
-  generate: (userData: any, provider: string, providerID: string, rememberMe: string) => {
-    return new Promise((resolve, reject) => {
-      const accessToken = jwt.sign({_id: userData._id, _key: userData._key, email: userData.email, phone: userData.phone, provider, providerID}, process.env.PrivateKey, { expiresIn: rememberMe ? '180d' : '1d' })
-      saveToken(userData._key, accessToken)
-      resolve(accessToken)
-    })
-  },
+    generate: (userData: any, rememberMe: string) => {
+        return new Promise<string>((resolve, reject) => {
+        const accessToken = jwt.sign({_key: userData._key, email: userData.email}, process.env.PrivateKey, { expiresIn: rememberMe ? '180d' : '1d' })
+        saveToken(userData._key, accessToken);
+        resolve(accessToken);
+        })
+    },
+  
   verify: (token: string) => {
     return new Promise((resolve, reject) => {
-      jwt.verify(token, process.env.PrivateKey, function(err, decoded) {
+      jwt.verify(token, process.env.PrivateKey, function(err: any, decoded: any) {
         if (err) {
           return reject({
             status: 403,
             message: 'Token is not valid'
           })
         } else {
-          const findToken = new Token({})
+          const findToken = new Token({user: decoded._key, token: token});
           if (!decoded._key) {
-            if (decoded._id) decoded._key = decoded._id.split('/')[1]
-            else return reject({status: 403, message: 'Invalid token!'})
+            return reject({status: 403, message: 'Invalid token!'})
           }
-          findToken.getOne({
-            filters: {user: decoded._key, isActive: true, token: token}
-          }).then((result: any) => {
+          findToken.getOne({filters: {user: decoded._key, isActive: true, token: token}, removed: false, }).then((result: any) => {
             if (result) {
               return resolve(decoded)
             } else {
@@ -50,4 +48,4 @@ const tokenHelper = {
   },
 } 
   
-module.exports = tokenHelper
+export default tokenHelper;
