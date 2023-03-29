@@ -1,4 +1,5 @@
 import tokenHelper from "../helpers/token";
+import passwordHelper from "../helpers/password";
 import User from "../models/User";
 
 const userController = {
@@ -61,7 +62,79 @@ const userController = {
                 return reject(err);
             });
         });
-    }
+    },
+    login: async (data: any) => {
+        return new Promise(async (resolve, reject) => {
+          const { email, phone, username } = data
+          if (!email && !phone && !username) {
+            return reject({
+              status: 400,
+              message: 'Please provide email, phone or username.'
+            })
+          }
+          let filter: { [key: string]: string } = {}
+          const phoneFormat = /^[0-9]{10,14}$/
+          const mailformat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (email) {
+            filter.email = email.toLowerCase()
+          } else if (phone) {
+            if (!phoneFormat.test(phone)) {
+              return reject({
+                status: 400,
+                message: 'Phone number is not valid.'
+              })
+            }
+            filter.phone = phone
+            if (filter.phone[0] !== '+') filter.phone = '+' + filter.phone
+          } else if (username) {
+            if (username.match(mailformat)) {
+              filter.email = username.toLowerCase()
+            } else if (phoneFormat.test(username)) {
+              filter.phone = username
+              if (filter.phone[0] !== '+') filter.phone = '+' + filter.phone
+            } else {
+              return reject({
+                status: 400,
+                message: 'Invalid login! enter your email or phone number'
+              })
+            }
+          }
+          const user = new User(data)
+          const query = `FOR u IN users FILTER LOWER(u.${Object.keys(filter)[0]}) == "${filter[Object.keys(filter)[0]]}" && !u.isremoved RETURN u`
+          const result = await user.query(query).catch(e => {
+            return reject(e)
+          })
+          const userData = result[0]
+          if (!userData) {
+            return reject({
+              status: 404,
+              message: 'User not found!'
+            })
+          } else {
+            const provider = userData.providers.find(provider => provider.provider === 'password')
+            if (!provider) {
+              return reject({
+                status: 401,
+                message: 'No password! you can add one by clicking on the button "Forgot password"'
+              })
+            } else {
+              if (await passwordHelper.verify(data.password, provider.password, provider.salt)) {
+                tokenHelper.generate(userData, data.rememberMe).then(token => {
+                  return resolve({
+                    token: token
+                  })
+                })
+              } else {
+                return reject({
+                  status: 401,
+                  message: 'Wrong password'
+                })
+              }
+            }
+          }
+        })
+      },
+      
 };
 
 export default userController;

@@ -15,7 +15,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "prettier --write .",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx . --fix",
-    "start": "nodemon --exec ts-node index.ts"
+    "start": "nodemon index.ts"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,10 @@
   "homepage": "https://gitlab.com/moaj-technologies/test-interview/meriem-pdf-extraction#readme",
   "dependencies": {
     "arangojs": "^8.1.0",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0"
+    "firebase-scrypt": "^2.2.0",
+    "jsonwebtoken": "^9.0.0",
+    "nodemon": "^2.0.22"
   }
 }

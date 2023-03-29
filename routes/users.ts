@@ -1,22 +1,22 @@
-var express = require('express');
-var app = express();
+import express from 'express';
+const app = express();
+import User from '../models/user';
 
-var User = require("../models/user");
-
-app.post("/register", (req: { body: { username: any; password: any; email: any; createdAt: any; updatedAt: any; } }, res: any) => {
-    const {username, password, email, createdAt, updatedAt} = req.body;
-
-    var user = new User({
-        username: username,
-        password: password,
-        email: email,
-        createdAt: createdAt,
-        updatedAt: updatedAt
-    });
-    user.save();
+app.post("/register", (req: any, res: any) => {
+const {username, password, email, createdAt, updatedAt} = req.body;
+const user = new User({
+    username,
+    password,
+    email,
+    createdAt,
+    updatedAt
+});
+user.save();
 });
 
-app.post("/login", (req: { body: { username: any; password: any; } }, res: any) => {
+app.post("/login", (req: any, res: any) => {
+const {username, password} = req.body;
+// Logic for user authentication
 });
 
-module.exports = app;
+export default app;
